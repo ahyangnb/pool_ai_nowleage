@@ -74,45 +74,50 @@ class KnowledgeBase:
     In production, you might want to use a vector database like Chroma, Pinecone, or Vertex AI Vector Search
     """
     
-    def __init__(self, storage_path: str = "knowledge_base.json", use_rag: bool = True):
+    def __init__(self, storage_path: str = "knowledge_base.json"):
         """
-        Initialize knowledge base
+        Initialize knowledge base with RAG (mandatory)
         
         Args:
             storage_path: Path to JSON file storing posts
-            use_rag: Whether to use RAG with vector embeddings
+        
+        Raises:
+            RuntimeError: If RAG is not available or OPENAI_API_KEY is not set
         """
+        if not RAG_AVAILABLE:
+            raise RuntimeError(
+                "RAG is required but LangChain with OpenAI embeddings is not installed. "
+                "Please install: pip install langchain langchain-openai langchain-community"
+            )
+        
         self.storage_path = storage_path
         self.posts: Dict[str, Post] = {}
-        self.use_rag = use_rag and RAG_AVAILABLE
         
-        # Initialize embedding model and vector store if RAG is enabled
+        # Initialize embedding model and vector store (RAG is mandatory)
         self.embeddings = None
         self.vector_store = None
         
-        if self.use_rag:
-            try:
-                # Use OpenAI embeddings (no torch required)
-                # Requires OPENAI_API_KEY environment variable
-                openai_api_key = os.getenv('OPENAI_API_KEY')
-                if not openai_api_key:
-                    raise ValueError(
-                        "OPENAI_API_KEY not found in environment. RAG requires OPENAI_API_KEY. "
-                        "Please set OPENAI_API_KEY in your .env file."
-                    )
-                self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-                print("RAG enabled: Using LangChain with OpenAI embeddings for semantic search")
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to initialize RAG: {e}. "
-                    "RAG is required for this knowledge base. Please ensure OPENAI_API_KEY is set correctly."
-                ) from e
+        try:
+            # Use OpenAI embeddings (no torch required)
+            # Requires OPENAI_API_KEY environment variable
+            openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not openai_api_key:
+                raise ValueError(
+                    "OPENAI_API_KEY not found in environment. RAG requires OPENAI_API_KEY. "
+                    "Please set OPENAI_API_KEY in your .env file."
+                )
+            self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+            print("RAG enabled: Using LangChain with OpenAI embeddings for semantic search")
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to initialize RAG: {e}. "
+                "RAG is required for this knowledge base. Please ensure OPENAI_API_KEY is set correctly."
+            ) from e
         
         self.load_posts()
         
         # Generate embeddings for existing posts
-        if self.use_rag:
-            self._generate_all_embeddings()
+        self._generate_all_embeddings()
     
     def load_posts(self):
         """Load posts from storage"""
@@ -144,8 +149,8 @@ class KnowledgeBase:
         self.posts[post.id] = post
         self.save_posts()
         
-        # Add to vector store if RAG is enabled
-        if self.use_rag and self.embeddings:
+        # Add to vector store (RAG is mandatory)
+        if self.embeddings and self.vector_store:
             self._add_post_to_vector_store(post)
     
     def search_posts(self, query: str, top_k: int = 3) -> List[SearchResult]:
@@ -162,11 +167,6 @@ class KnowledgeBase:
         Raises:
             RuntimeError: If RAG is not properly initialized
         """
-        if not self.use_rag:
-            raise RuntimeError(
-                "RAG is not enabled. This knowledge base requires RAG with OPENAI_API_KEY. "
-                "Please ensure OPENAI_API_KEY is set in your environment."
-            )
         if not self.vector_store:
             raise RuntimeError(
                 "Vector store is not initialized. RAG requires a properly initialized vector store."
@@ -246,9 +246,10 @@ class KnowledgeBase:
                 self.vector_store = FAISS.from_documents(documents, self.embeddings)
                 print(f"Created vector store with {len(documents)} posts")
             except Exception as e:
-                print(f"Failed to create vector store: {e}")
-                self.use_rag = False
-                self.vector_store = None
+                raise RuntimeError(
+                    f"Failed to create vector store: {e}. "
+                    "RAG is required. Please ensure embeddings are properly initialized."
+                ) from e
     
     def _add_post_to_vector_store(self, post: Post):
         """Add a single post to the vector store"""

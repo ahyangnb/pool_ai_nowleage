@@ -89,10 +89,11 @@ async def example_query_knowledge_base():
     
     # Test queries
     queries = [
-        "How to use Python virtual environment?",
-        "How does FastAPI define routes?",
-        "How to create Google ADK tools?",
-        "How to learn machine learning?"  # This should return "not found"
+        # "How to use Python virtual environment?",
+        # "How does FastAPI define routes?",
+        "middleware in FastAPI",
+        # "How to create Google ADK tools?",
+        # "How to learn machine learning?"  # This should return "not found"
     ]
     
     for query in queries:
