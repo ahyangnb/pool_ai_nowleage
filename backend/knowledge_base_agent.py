@@ -17,22 +17,22 @@ import numpy as np
 # Load environment variables
 load_dotenv()
 
-# Try to import LangChain for RAG
+# Try to import LangChain for RAG with OpenAI embeddings (no torch required)
 try:
-    from langchain.embeddings import HuggingFaceEmbeddings
-    from langchain.vectorstores import FAISS
-    from langchain.schema import Document
+    from langchain_openai import OpenAIEmbeddings
+    from langchain_community.vectorstores import FAISS
+    from langchain_core.documents import Document
     RAG_AVAILABLE = True
 except ImportError:
     try:
-        # Try alternative import paths for newer LangChain versions
-        from langchain_community.embeddings import HuggingFaceEmbeddings
-        from langchain_community.vectorstores import FAISS
-        from langchain_core.documents import Document
+        # Try alternative import paths
+        from langchain.embeddings import OpenAIEmbeddings
+        from langchain.vectorstores import FAISS
+        from langchain.schema import Document
         RAG_AVAILABLE = True
     except ImportError:
         RAG_AVAILABLE = False
-        print("Warning: LangChain not installed. Using keyword matching instead.")
+        print("Warning: LangChain with OpenAI embeddings not installed. Using keyword matching instead.")
 
 from google.adk.agents import Agent
 from google.adk.tools import BaseTool
@@ -91,13 +91,16 @@ class KnowledgeBase:
         
         if self.use_rag:
             try:
-                # Use English-only embedding model optimized for semantic search
-                # Using HuggingFaceEmbeddings which can work without torch in some cases
-                self.embeddings = HuggingFaceEmbeddings(
-                    model_name='all-MiniLM-L6-v2',
-                    model_kwargs={'device': 'cpu'}  # Use CPU to avoid torch GPU issues
-                )
-                print("RAG enabled: Using LangChain with HuggingFace embeddings for semantic search")
+                # Use OpenAI embeddings (no torch required)
+                # Requires OPENAI_API_KEY environment variable
+                openai_api_key = os.getenv('OPENAI_API_KEY')
+                if not openai_api_key:
+                    print("Warning: OPENAI_API_KEY not found in environment. RAG disabled. Using keyword matching.")
+                    print("To enable RAG, set OPENAI_API_KEY in your .env file.")
+                    self.use_rag = False
+                else:
+                    self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+                    print("RAG enabled: Using LangChain with OpenAI embeddings for semantic search")
             except Exception as e:
                 print(f"Failed to load embedding model: {e}. Falling back to keyword matching.")
                 self.use_rag = False

@@ -1,61 +1,63 @@
 # Backend API
 
 FastAPI backend for Pool AI Knowledge Base with Google ADK (Agent Development Kit) integration.
-带有 Google ADK（代理开发工具包）集成的 Pool AI 知识库 FastAPI 后端。
 
-## Setup / 设置
+## Setup
 
-1. Install dependencies / 安装依赖:
+1. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Set up environment variables / 设置环境变量:
-Create a `.env` file in the project root / 在项目根目录创建 `.env` 文件:
+2. Set up environment variables:
+Create a `.env` file in the project root:
 ```bash
 GOOGLE_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here  # Required for RAG functionality
 ```
 
-You can get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
-您可以从 [Google AI Studio](https://makersuite.google.com/app/apikey) 获取 API 密钥。
+You can get your API keys from:
+- Google API key: [Google AI Studio](https://makersuite.google.com/app/apikey)
+- OpenAI API key: [OpenAI Platform](https://platform.openai.com/api-keys)
 
-3. Run the server / 运行服务器:
+Note: RAG functionality requires OPENAI_API_KEY. Without it, the system will use keyword matching instead.
+
+3. Run the server:
 ```bash
 python main.py
 ```
 
-Or with uvicorn directly / 或直接使用 uvicorn:
+Or with uvicorn directly:
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## API Documentation / API 文档
+## API Documentation
 
-Once running, visit / 运行后访问:
+Once running, visit:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## ADK Agents / ADK 代理
+## ADK Agents
 
 This project includes several pre-configured ADK agents with different capabilities:
-此项目包含多个具有不同功能的预配置 ADK 代理：
 
-### Available Agents / 可用代理
+### Available Agents
 
-1. **calculator** - Performs mathematical calculations / 执行数学计算
-2. **time** - Provides current time information / 提供当前时间信息
-3. **text** - Processes and formats text / 处理和格式化文本
-4. **search** - Searches the web using Google Search / 使用 Google 搜索搜索网络
-5. **multi** - Multi-tool agent with all capabilities / 具有所有功能的多工具代理
+1. **calculator** - Performs mathematical calculations
+2. **time** - Provides current time information
+3. **text** - Processes and formats text
+4. **search** - Searches the web using Google Search
+5. **multi** - Multi-tool agent with all capabilities
 
-### API Endpoints / API 端点
+### API Endpoints
 
-#### List Available Agents / 列出可用代理
+#### List Available Agents
 ```bash
 GET /api/agents
 ```
 
-#### Chat with an Agent / 与代理聊天
+#### Chat with an Agent
 ```bash
 POST /api/chat
 Content-Type: application/json
@@ -67,42 +69,42 @@ Content-Type: application/json
 }
 ```
 
-#### Get Agent Examples / 获取代理示例
+#### Get Agent Examples
 ```bash
 GET /api/examples/{agent_name}
 ```
 
-#### Get Agent Info / 获取代理信息
+#### Get Agent Info
 ```bash
 GET /api/agents/{agent_name}/info
 ```
 
-### Example Usage / 使用示例
+### Example Usage
 
-#### Using Python / 使用 Python
+#### Using Python
 
 ```python
 from adk_agents import get_agent
 
-# Get an agent / 获取代理
+# Get an agent
 agent = get_agent("calculator")
 
-# Run a query / 运行查询
+# Run a query
 response = await agent.run("What is 25 * 4?")
 print(response)
 
-# Stream responses / 流式响应
+# Stream responses
 async for chunk in agent.stream("Calculate 100 / 5"):
     print(chunk, end="")
 ```
 
-#### Using the API / 使用 API
+#### Using the API
 
 ```bash
-# List all agents / 列出所有代理
+# List all agents
 curl http://localhost:8000/api/agents
 
-# Chat with calculator agent / 与计算器代理聊天
+# Chat with calculator agent
 curl -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
   -d '{
@@ -110,48 +112,44 @@ curl -X POST http://localhost:8000/api/chat \
     "message": "What is 25 * 4?"
   }'
 
-# Get examples / 获取示例
+# Get examples
 curl http://localhost:8000/api/examples/calculator
 ```
 
-### Running Examples / 运行示例
+### Running Examples
 
 Run the example script to see all agents in action:
-运行示例脚本以查看所有代理的运行情况：
 
 ```bash
 python examples.py
 ```
 
 This will demonstrate:
-这将演示：
-- Calculator agent usage / 计算器代理用法
-- Time agent usage / 时间代理用法
-- Text processing agent usage / 文本处理代理用法
-- Search agent usage / 搜索代理用法
-- Multi-tool agent usage / 多工具代理用法
-- Streaming responses / 流式响应
+- Calculator agent usage
+- Time agent usage
+- Text processing agent usage
+- Search agent usage
+- Multi-tool agent usage
+- Streaming responses
 
-## Custom Tools / 自定义工具
+## Custom Tools
 
 The project includes several custom tools:
-项目包含多个自定义工具：
 
-- `calculate(expression)` - Evaluates mathematical expressions / 评估数学表达式
-- `get_current_time(timezone)` - Gets current time / 获取当前时间
-- `format_text(text, format_type)` - Formats text / 格式化文本
-- `word_count(text)` - Counts words and characters / 统计单词和字符
+- `calculate(expression)` - Evaluates mathematical expressions
+- `get_current_time(timezone)` - Gets current time
+- `format_text(text, format_type)` - Formats text
+- `word_count(text)` - Counts words and characters
 
 You can create your own agents with these tools or add new custom tools.
-您可以使用这些工具创建自己的代理或添加新的自定义工具。
 
-## Project Structure / 项目结构
+## Project Structure
 
 ```
 backend/
-├── main.py              # FastAPI application / FastAPI 应用程序
-├── adk_agents.py        # ADK agent definitions / ADK 代理定义
-├── examples.py          # Usage examples / 使用示例
-├── requirements.txt     # Dependencies / 依赖项
-└── README.md           # This file / 本文件
+├── main.py              # FastAPI application
+├── adk_agents.py        # ADK agent definitions
+├── examples.py          # Usage examples
+├── requirements.txt     # Dependencies
+└── README.md           # This file
 ```

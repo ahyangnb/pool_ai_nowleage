@@ -94,8 +94,8 @@ async def example_query_knowledge_base():
     # Test queries / 测试查询
     queries = [
         # "如何使用 Python 虚拟环境？",
-        # "FastAPI 如何定义路由？",
-        "FastAPI 如何使用中间件？",
+        "FastAPI 如何定义路由？",
+        # "FastAPI 如何使用中间件？",
         # "如何创建 Google ADK 工具？",
         # "如何学习机器学习？"  # This should return "not found" / 这应该返回"未找到"
     ]

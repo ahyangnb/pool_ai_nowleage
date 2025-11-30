@@ -20,15 +20,14 @@ RAG combines:
 **How it works**:
 
 ```python
-# Initialize embedding model using LangChain
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# Initialize embedding model using LangChain with OpenAI embeddings (no torch required)
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
+import os
 
-self.embeddings = HuggingFaceEmbeddings(
-    model_name='all-MiniLM-L6-v2',
-    model_kwargs={'device': 'cpu'}
-)
+# OpenAI embeddings require OPENAI_API_KEY environment variable
+self.embeddings = OpenAIEmbeddings(openai_api_key=os.getenv('OPENAI_API_KEY'))
 
 # Create document and add to vector store
 text = f"{post.title}. {post.content}"
@@ -135,13 +134,17 @@ results = knowledge_base.search_posts(query, top_k=3)
    - Finds relevant content even without exact keyword matches
    - Handles paraphrased queries
 
-3. **English Language Support**
-   - Uses English-optimized embedding model
-   - Optimized for English text processing
+3. **No Torch Dependency**
+   - Uses OpenAI embeddings via API (no local model downloads)
+   - Completely avoids sentence-transformers and torch
+   - Works on any system that can make HTTP requests
 
 ## Fallback Mechanism
 
-If `LangChain` is not installed, the system automatically falls back to keyword matching:
+The system automatically falls back to keyword matching if:
+- `LangChain` is not installed
+- `OPENAI_API_KEY` is not set in environment variables
+- OpenAI API is unavailable
 
 ```python
 if self.use_rag and self.vector_store:
@@ -153,10 +156,10 @@ else:
 ## Installation
 
 ```bash
-pip install langchain>=0.1.0 langchain-community>=0.0.20 numpy>=1.24.0 faiss-cpu>=1.7.4
+pip install langchain>=0.1.0 langchain-openai>=0.1.0 langchain-community>=0.0.20 numpy>=1.24.0 faiss-cpu>=1.7.4
 ```
 
-**Note**: `HuggingFaceEmbeddings` may install `sentence-transformers` as a dependency, but LangChain provides a cleaner interface and better vector store management with FAISS.
+**Note**: This implementation uses OpenAI embeddings which completely avoids `sentence-transformers` and `torch` dependencies. You need to set `OPENAI_API_KEY` in your `.env` file to enable RAG functionality.
 
 ## Usage Example
 
